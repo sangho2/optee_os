@@ -3,7 +3,8 @@ cppflags-y += -I$(sub-dir)/../..
 srcs-y += utee_syscalls_64.S
 
 ifneq ($(sm),ldelf)
-srcs-y += tcb.c
-srcs-y += user_ta_entry.c
+#femi: 31b31015 moves tcb and user_ta_entry out of arch
+#srcs-y += tcb.c
+#srcs-y += user_ta_entry.c
 subdirs-y += gprof
 endif #$(sm-$(sm)-is-ld)
