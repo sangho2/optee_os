@@ -7,12 +7,17 @@ include mk/$(COMPILER_core).mk
 # Defines the cc-option macro using the compiler set for the core module
 include mk/cc-option.mk
 
+#femi: c0088d30 removes CFG_LTC_OPTEE_THREAD
 #todo: check latest implement
-CFG_LTC_OPTEE_THREAD ?= y
-CFG_LPAE_ADDR_SPACE_SIZE ?= (1ull << 32)
+#CFG_LTC_OPTEE_THREAD ?= y
+#femi: cc8fda93 replaces CFG_LPAE_ADDR_SPACE_SIZE with CFG_LPAE_ADDR_SPACE_BITS
+#CFG_LPAE_ADDR_SPACE_SIZE ?= (1ull << 32)
+CFG_LPAE_ADDR_SPACE_BITS ?= 32
 
 CFG_MMAP_REGIONS ?= 13
 CFG_RESERVED_VASPACE_SIZE ?= (1024 * 1024 * 10)
+CFG_NEX_DYN_VASPACE_SIZE ?= (1024 * 1024)
+CFG_TEE_DYN_VASPACE_SIZE ?= (1024 * 1024)
 
 CFG_KERN_LINKER_FORMAT ?= "elf64-x86-64"
 CFG_KERN_LINKER_ARCH ?= "i386:x86-64"
@@ -26,14 +31,24 @@ CFG_CORE_RODATA_NOEXEC ?= n
 ifeq ($(CFG_CORE_RODATA_NOEXEC),y)
 $(call force,CFG_CORE_RWDATA_NOEXEC,y)
 endif
+#femi: 8420a14c sets this to n, changing this to n
 # 'y' to set the Alignment Check Enable bit in SCTLR/SCTLR_EL1, 'n' to clear it
-CFG_SCTLR_ALIGNMENT_CHECK ?= y
+CFG_SCTLR_ALIGNMENT_CHECK ?= n
 
 ifeq ($(CFG_WITH_PAGER),y)
 ifeq ($(CFG_CORE_SANITIZE_KADDRESS),y)
 $(error Error: CFG_CORE_SANITIZE_KADDRESS not compatible with CFG_WITH_PAGER)
 endif
 endif
+
+# CFG_MAX_CACHE_LINE_SHIFT is used to define platform specific maximum cache
+# line size in address lines. This must cover all inner and outer cache levels.
+# When data is aligned with this and cache operations are performed then those
+# only affect correct data.
+#
+# Default value (6 lines or 64 bytes) should cover most architectures, override
+# this in platform config if different.
+CFG_MAX_CACHE_LINE_SHIFT ?= 6
 
 core-platform-cppflags	+= -I$(arch-dir)/include
 core-platform-subdirs += \

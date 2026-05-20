@@ -1,21 +1,27 @@
-srcs-$(CFG_WITH_USER_TA) += ldelf_loader.c
-srcs-y += tee_time.c
-srcs-y += otp_stubs.c
+#femi: d8e4ae07 moves ldelf_loader.c out of arch
+#srcs-$(CFG_WITH_USER_TA) += ldelf_loader.c
+#femi: 14c0df4e moves tee_time.c out of arch
+#srcs-y += tee_time.c
+#femi: 683b6d2c6f moves otp_stubs.c out of arch
+#srcs-y += otp_stubs.c
 srcs-y += descriptor.c
 srcs-y += fault.c
 srcs-y += gdt.S
 srcs-y += exceptions.S
 srcs-y += fpu.c
 
-srcs-$(CFG_SECURE_TIME_SOURCE_REE) += tee_time_ree.c
+#femi:see tee_time.c above
+#srcs-$(CFG_SECURE_TIME_SOURCE_REE) += tee_time_ree.c
 
 srcs-y += spin_lock_64.S
-srcs-$(CFG_TEE_CORE_DEBUG) += spin_lock_debug.c
+#femi: ec835942 moves spin_lock_debug.c out of arch
+#srcs-$(CFG_TEE_CORE_DEBUG) += spin_lock_debug.c
 
 srcs-y += thread_64.S
 srcs-y += thread.c
 srcs-y += thread_optee_smc.c
-srcs-y += trace_ext.c
+#femi:5305bce1 moves trace_ext.c out of arch
+#srcs-y += trace_ext.c
 srcs-y += misc.c
 
 srcs-y += boot.c

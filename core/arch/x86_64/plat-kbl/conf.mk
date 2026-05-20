@@ -5,6 +5,9 @@ $(call force,CFG_PM_STUBS,y)
 $(call force,CFG_SECURE_TIME_SOURCE_REE,y)
 
 $(call force,CFG_WITH_LPAE,y)
+#femi: CFG_DYN_CONFIG did not exist on 3.13. It is conflicting
+# with static thread definition in arch x86_64 threads.c
+$(call force,CFG_DYN_CONFIG,n)
 
 CFG_WITH_STACK_CANARIES ?= n
 CFG_WITH_STATS ?= y
