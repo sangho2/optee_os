@@ -228,7 +228,7 @@ static TEE_Result e64_parse_ehdr(struct ta_elf *elf, Elf64_Ehdr *ehdr)
 
 	return TEE_SUCCESS;
 }
-#else /*X86_64*/
+#elif !defined(ARM32) && !defined(ARM64) && !defined(RV64)
 static TEE_Result e64_parse_ehdr(struct ta_elf *elf __unused,
 				 Elf64_Ehdr *ehdr __unused)
 {
@@ -603,7 +603,6 @@ static void parse_load_segments(struct ta_elf *elf)
 
 	if (elf->is_32bit) {
 		Elf32_Phdr *phdr = elf->phdr;
-
 		for (n = 0; n < elf->e_phnum; n++)
 			if (phdr[n].p_type == PT_LOAD) {
 				add_segment(elf, phdr[n].p_offset,
@@ -618,6 +617,9 @@ static void parse_load_segments(struct ta_elf *elf)
 			}
 	} else {
 		Elf64_Phdr *phdr = elf->phdr;
+#ifdef X86_64
+		Elf64_Phdr *tls = NULL;
+#endif
 
 		for (n = 0; n < elf->e_phnum; n++)
 			if (phdr[n].p_type == PT_LOAD) {
@@ -626,6 +628,18 @@ static void parse_load_segments(struct ta_elf *elf)
 					    phdr[n].p_memsz, phdr[n].p_flags,
 					    phdr[n].p_align);
 			} else if (phdr[n].p_type == PT_TLS) {
+#ifdef X86_64
+				if (tls || phdr[n].p_filesz > phdr[n].p_memsz ||
+				    (phdr[n].p_align > 1 &&
+				     !IS_POWER_OF_TWO(phdr[n].p_align)))
+					err(TEE_ERROR_BAD_FORMAT,
+					    "Invalid x86_64 PT_TLS segment");
+				tls = phdr + n;
+				if (!elf->is_main)
+					err(TEE_ERROR_NOT_SUPPORTED,
+					    "x86_64 dependency TLS is unsupported");
+				assign_tls_mod_id(elf);
+#endif
 				elf->tls_start = phdr[n].p_vaddr;
 				elf->tls_filesz = phdr[n].p_filesz;
 				elf->tls_memsz = phdr[n].p_memsz;
@@ -635,6 +649,32 @@ static void parse_load_segments(struct ta_elf *elf)
 				elf->prop_align = phdr[n].p_align;
 				elf->prop_memsz = phdr[n].p_memsz;
 			}
+#ifdef X86_64
+		if (tls) {
+			bool contained = false;
+			size_t tls_end = 0;
+
+			if (ADD_OVERFLOW(tls->p_vaddr, tls->p_filesz, &tls_end))
+				err(TEE_ERROR_BAD_FORMAT, "PT_TLS range overflow");
+			for (n = 0; n < elf->e_phnum; n++) {
+				size_t load_end = 0;
+
+				if (phdr[n].p_type != PT_LOAD ||
+				    !(phdr[n].p_flags & PF_R) ||
+				    ADD_OVERFLOW(phdr[n].p_vaddr,
+						 phdr[n].p_filesz, &load_end))
+					continue;
+				if (tls->p_vaddr >= phdr[n].p_vaddr &&
+				    tls_end <= load_end) {
+					contained = true;
+					break;
+				}
+			}
+			if (!contained)
+				err(TEE_ERROR_BAD_FORMAT,
+				    "PT_TLS data is outside a readable PT_LOAD");
+		}
+#endif
 	}
 }
 

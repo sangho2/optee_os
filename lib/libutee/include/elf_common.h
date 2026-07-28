@@ -1053,6 +1053,9 @@ typedef struct {
 #define	R_X86_64_DTPOFF32	21	/* Offset in TLS block */
 #define	R_X86_64_GOTTPOFF	22	/* PC relative offset to IE GOT entry */
 #define	R_X86_64_TPOFF32	23	/* Offset in static TLS block */
+#define	R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor */
+#define	R_X86_64_TLSDESC_CALL	35	/* Marker for TLS descriptor call */
+#define	R_X86_64_TLSDESC	36	/* TLS descriptor */
 #define	R_X86_64_IRELATIVE	37
 
 

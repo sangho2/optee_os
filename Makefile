@@ -92,11 +92,16 @@ $(foreach t, $(ta-targets), $(eval $(call build-ta-target, $(t))))
 
 # Build user TAs included in this git
 ifeq ($(CFG_BUILD_IN_TREE_TA),y)
+in-tree-ta-mk-files := $(sort $(wildcard ta/*/user_ta.mk))
+ifeq ($(filter ta_x86_64,$(ta-targets)),)
+in-tree-ta-mk-files := $(filter-out ta/x86_64_tls_test/user_ta.mk, \
+					$(in-tree-ta-mk-files))
+endif
 define build-user-ta
 ta-mk-file := $(1)
 include ta/mk/build-user-ta.mk
 endef
-$(foreach t, $(sort $(wildcard ta/*/user_ta.mk)), $(eval $(call build-user-ta,$(t))))
+$(foreach t,$(in-tree-ta-mk-files),$(eval $(call build-user-ta,$(t))))
 endif
 endif
 

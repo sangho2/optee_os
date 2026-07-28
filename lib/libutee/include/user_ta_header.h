@@ -113,6 +113,10 @@ void __utee_call_elf_fini_fn(void);
 
 void __utee_tcb_init(void);
 
+#ifdef X86_64
+void __utee_tcb_init_bootstrap(void);
+#endif
+
 /*
  * Information about the ELF objects loaded by the application
  */

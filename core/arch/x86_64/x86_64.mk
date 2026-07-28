@@ -60,6 +60,13 @@ platform-cflags-generic ?= -ffunction-sections -fdata-sections -pipe
 platform-aflags-generic ?= -pipe
 platform-aflags-generic += -D__ASSEMBLY__
 x86-64-platform-cppflags += -DX86_64=1 -D__LP64__=1
+x86-64-stack-guard-offset := 0x28
+x86-64-platform-cppflags += \
+	-DX86_64_STACK_PROTECTOR_GUARD_OFFSET=$(x86-64-stack-guard-offset)
+x86-64-stackp-cflags := -mstack-protector-guard=tls
+x86-64-stackp-cflags += -mstack-protector-guard-reg=fs
+x86-64-stackp-cflags += \
+	-mstack-protector-guard-offset=$(x86-64-stack-guard-offset)
 
 ifeq ($(DEBUG),1)
 # For backwards compatibility
@@ -114,6 +121,7 @@ CFG_X86_64_ta_x86_64 := y
 arch-bits-ta_x86_64 := 64
 ta_x86_64-platform-cppflags += $(x86-64-platform-cppflags)
 ta_x86_64-platform-cflags += $(x86-64-platform-cflags)
+ta_x86_64-platform-cflags += $(x86-64-stackp-cflags)
 ta_x86_64-platform-cflags += $(platform-cflags-optimization)
 ta_x86_64-platform-cflags += $(platform-cflags-debug-info)
 ta_x86_64-platform-cflags += -fpic
@@ -127,6 +135,7 @@ ta_x86_64-platform-aflags += $(platform-aflags-debug-info)
 ta_x86_64-platform-aflags += $(x86-64-platform-aflags)
 
 ta_x86_64-platform-cxxflags += -fpic
+ta_x86_64-platform-cxxflags += $(x86-64-stackp-cflags)
 ta_x86_64-platform-cxxflags += $(platform-cflags-optimization)
 ta_x86_64-platform-cxxflags += $(platform-cflags-debug-info)
 

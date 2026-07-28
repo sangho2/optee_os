@@ -16,6 +16,28 @@
 #include "sys.h"
 #include "ta_elf.h"
 
+#ifdef X86_64
+static bool x86_64_tls_reloc_unsupported(size_t type)
+{
+	switch (type) {
+	case R_X86_64_DTPMOD64:
+	case R_X86_64_DTPOFF64:
+	case R_X86_64_TPOFF64:
+	case R_X86_64_TLSGD:
+	case R_X86_64_TLSLD:
+	case R_X86_64_DTPOFF32:
+	case R_X86_64_GOTTPOFF:
+	case R_X86_64_TPOFF32:
+	case R_X86_64_GOTPC32_TLSDESC:
+	case R_X86_64_TLSDESC_CALL:
+	case R_X86_64_TLSDESC:
+		return true;
+	default:
+		return false;
+	}
+}
+#endif
+
 static uint32_t elf_hash(const char *name)
 {
 	const unsigned char *p = (const unsigned char *)name;
@@ -651,10 +673,17 @@ static void e64_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 		Elf64_Addr *where = NULL;
 		size_t write_size = sizeof(*where);
 		size_t sym_idx __maybe_unused = 0;
+		size_t rel_type = ELF64_R_TYPE(rela->r_info);
 		Elf64_Addr end_offs = 0;
 
-		if (ELF64_R_TYPE(rela->r_info) == R_AARCH64_TLSDESC)
+		if (rel_type == R_AARCH64_TLSDESC)
 			write_size *= 2;
+#ifdef X86_64
+		if (x86_64_tls_reloc_unsupported(rel_type))
+			err(TEE_ERROR_NOT_SUPPORTED,
+			    "x86_64 TA retains unsupported TLS relocation %zu; only statically resolved local-exec TLS is supported",
+			    rel_type);
+#endif
 
 		/* Check the address is inside TA memory */
 		if (ADD_OVERFLOW(rela->r_offset, write_size, &end_offs) ||
@@ -664,7 +693,7 @@ static void e64_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 
 		where = (Elf64_Addr *)(elf->load_addr + rela->r_offset);
 
-		switch (ELF64_R_TYPE(rela->r_info)) {
+		switch (rel_type) {
 #ifdef ARM64
 		case R_AARCH64_NONE:
 			/*
@@ -761,8 +790,8 @@ static void e64_relocate(struct ta_elf *elf, unsigned int rel_sidx)
 			break;
 #endif /*X86_64*/
 		default:
-			err(TEE_ERROR_BAD_FORMAT, "Unknown relocation type %zd",
-			     ELF64_R_TYPE(rela->r_info));
+			err(TEE_ERROR_BAD_FORMAT, "Unknown relocation type %zu",
+			     rel_type);
 		}
 	}
 }

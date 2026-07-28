@@ -52,7 +52,10 @@ FUNC _ldelf_start , :
 	cmp	%rax, %rcx
 	jg	1b
 
-2:	call	ldelf
+2:	movq	%rdi, %r12
+	call	__utee_tcb_init_bootstrap
+	movq	%r12, %rdi
+	call	ldelf
 	xorq	%rdi, %rdi
 	call	_ldelf_return
 3:	xorq	%rdi, %rdi

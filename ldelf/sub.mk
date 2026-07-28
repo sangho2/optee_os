@@ -1,4 +1,5 @@
 global-incdirs-y += include
+global-incdirs-$(CFG_X86_64_$(sm)) += ../lib/libutee/arch/x86_64
 srcs-$(CFG_ARM32_$(sm)) += start_a32.S
 srcs-$(CFG_ARM64_$(sm)) += start_a64.S
 srcs-$(CFG_ARM32_$(sm)) += syscalls_a32.S

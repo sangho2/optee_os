@@ -25,6 +25,7 @@ CFG_RV32_$(sm) := y
 endif
 ifeq ($(CFG_X86_64_core),y)
 CFG_X86_64_$(sm) := y
+cflags$(sm) += $(x86-64-stackp-cflags)
 endif
 arch-bits-$(sm) := $(arch-bits-core)
 

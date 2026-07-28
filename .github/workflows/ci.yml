@@ -56,6 +56,17 @@ jobs:
           # pycodestyle task
           sudo -E bash -c "apt update -qq -y && apt install -qq -y pycodestyle"
           pycodestyle scripts/*.py core/arch/arm/plat-stm32mp1/scripts/stm32image.py
+      - name: Run TLS host tests
+        shell: bash
+        run: |
+          make -C ldelf/tests check
+          make -j2 O=/tmp/optee-x86 ARCH=x86_64 PLATFORM=kbl \
+            CROSS_COMPILE64= ldelf ta_dev_kit
+          tls_ta=/tmp/optee-x86/ta/x86_64_tls_test/4f65c0e0-5c8f-4d5f-a1b2-2d93d10d7a01.elf
+          readelf -lW "$tls_ta" | grep -Eq 'TLS.*0x000008.*0x000018.*0x8'
+          if readelf -rW "$tls_ta" | grep -Eq 'TLS|TPOFF|DTPMOD|DTPOFF'; then
+            exit 1
+          fi
   builds:
     name: Build (${{ matrix.name }})
     runs-on: ubuntu-latest

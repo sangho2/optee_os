@@ -51,9 +51,19 @@ _C_FUNCTION(__ta_entry)(unsigned long func,
 			struct utee_params *up,
 			unsigned long cmd_id)
 {
+#ifdef X86_64
+	static bool tcb_bootstrap_inited;
+#else
 	static bool stack_canary_inited;
+#endif
 	TEE_Result res = TEE_ERROR_GENERIC;
 
+#ifdef X86_64
+	if (!tcb_bootstrap_inited) {
+		__utee_tcb_init_bootstrap();
+		tcb_bootstrap_inited = true;
+	}
+#else
 	if (IS_ENABLED(_CFG_TA_STACK_PROTECTOR) && !stack_canary_inited) {
 		uintptr_t canary = 0;
 
@@ -68,6 +78,7 @@ _C_FUNCTION(__ta_entry)(unsigned long func,
 		__stack_chk_guard = (void *)canary;
 		stack_canary_inited = true;
 	}
+#endif
 
 	res = __utee_entry(func, session_id, up, cmd_id);
 
